@@ -34,6 +34,43 @@ dbConnect();
 app.get("/bills", (req, res) => {
   res.send(bills);
 });
+//--1 bills Collection
+const billsCollection = client.db("powerHackBilling").collection("bills");
+// Add bill to the bills collection
+app.post("/add-billing", async (req, res) => {
+  try {
+    const bill = req.body;
+    const result = await billsCollection.insertOne(bill);
+    res.send({
+      success: true,
+      message: "Bill details added successfully",
+      data: result,
+    });
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+//--1 get billing data from the data base and send response to the client site
+app.get("/billing-list", async (req, res) => {
+  try {
+    const query = {};
+    const cursor = billsCollection.find(query);
+    const bills = await cursor.toArray();
+    res.send({
+      success: true,
+      message: "Successfully got the bills data",
+      data: bills,
+    });
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Power Hack server.");
