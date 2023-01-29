@@ -8,11 +8,12 @@ require("colors");
 const app = express();
 const port = process.env.PORT || 5005;
 
-const bills = require("./bills.json");
+// const bills = require("./bills.json");
 
 //Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Db connections
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.hufticd.mongodb.net/?retryWrites=true&w=majority`;
@@ -31,11 +32,13 @@ async function dbConnect() {
   }
 }
 dbConnect();
-app.get("/bills", (req, res) => {
-  res.send(bills);
-});
+// app.get("/bills", (req, res) => {
+//   res.send(bills);
+// });
 //--1 bills Collection
 const billsCollection = client.db("powerHackBilling").collection("bills");
+//--2 bills Collection
+const usersCollection = client.db("powerHackBilling").collection("users");
 // Add bill to the bills collection
 app.post("/add-billing", async (req, res) => {
   try {
@@ -90,7 +93,55 @@ app.delete("/delete-billing/:id", async (req, res) => {
     });
   }
 });
-
+//--2 Registration
+app.post("/registration", async (req, res) => {
+  try {
+    /// console.log("Request body for registration", req.body);
+    const { name, email, password } = req.body;
+    const result = await usersCollection.insertOne({
+      name,
+      email,
+      password,
+    });
+    res.send({
+      success: true,
+      message: "User registered successfully!",
+      data: result,
+    });
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+// Login
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const result = await usersCollection.findOne({ email, password });
+    console.log("Logged in user", result);
+    if (result) {
+      res.send({
+        success: true,
+        message: "User logged in successfully!",
+        data: result,
+      });
+    } else {
+      res.send({
+        success: false,
+        // error: error.message,
+        error: "Invalid credentials",
+      });
+    }
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+///------------------
 app.get("/", (req, res) => {
   res.send("Welcome to the Power Hack server.");
 });
