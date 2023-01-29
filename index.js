@@ -71,6 +71,25 @@ app.get("/billing-list", async (req, res) => {
     });
   }
 });
+//---1 Delete bills
+app.delete("/delete-billing/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    // console.log(id);
+    const query = { _id: ObjectId(id) };
+    const result = await billsCollection.deleteOne(query);
+    res.send({
+      success: true,
+      message: "Bill deleted successfully",
+      data: result,
+    });
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Power Hack server.");
