@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const jwt = require("jsonwebtoken");
+const auth = require("./middleware/auth");
 
 require("dotenv").config();
 require("colors");
@@ -39,6 +41,16 @@ dbConnect();
 const billsCollection = client.db("powerHackBilling").collection("bills");
 //--2 bills Collection
 const usersCollection = client.db("powerHackBilling").collection("users");
+
+//get users
+app.get("/users", auth, async (req, res) => {
+  const users = await usersCollection.find().toArray();
+  res.send({
+    success: true,
+    data: users,
+  });
+});
+
 // Add bill to the bills collection
 app.post("/add-billing", async (req, res) => {
   try {
@@ -103,6 +115,13 @@ app.post("/registration", async (req, res) => {
       email,
       password,
     });
+    if (!name || !email || !password) {
+      return res.send({
+        success: false,
+        error: "Please provide proper credential!",
+      });
+    }
+
     res.send({
       success: true,
       message: "User registered successfully!",
@@ -119,21 +138,31 @@ app.post("/registration", async (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) {
+      return res.send({
+        success: false,
+        error: "Invalid input!",
+      });
+    }
     const result = await usersCollection.findOne({ email, password });
     console.log("Logged in user", result);
-    if (result) {
-      res.send({
-        success: true,
-        message: "User logged in successfully!",
-        data: result,
-      });
-    } else {
-      res.send({
+    if (!result) {
+      return res.send({
         success: false,
-        // error: error.message,
         error: "Invalid credentials",
       });
     }
+    //generate token (user log in successfully now check if has the token)
+    delete result?.password;
+    // console.log("User after delete password", result);
+    const token = jwt.sign(result, process.env.JWT_SECRET);
+    // console.log("token", token);
+    res.send({
+      success: true,
+      message: "User logged in successfully!",
+      data: result,
+      token: token,
+    });
   } catch (error) {
     res.send({
       success: false,
