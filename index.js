@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const auth = require("./middleware/auth");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
-const auth = require("./middleware/auth");
 
 require("dotenv").config();
 require("colors");
@@ -11,8 +11,7 @@ const app = express();
 const port = process.env.PORT || 5005;
 
 // const bills = require("./bills.json");
-
-//Middleware
+// middle ware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
