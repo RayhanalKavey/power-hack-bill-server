@@ -45,6 +45,10 @@ const usersCollection = client.db("powerHackBilling").collection("users");
 //get users
 app.get("/users", auth, async (req, res) => {
   const users = await usersCollection.find().toArray();
+  // console.log(users);
+  delete users?.password;
+  console.log(users);
+
   res.send({
     success: true,
     data: users,
@@ -71,7 +75,14 @@ app.post("/add-billing", async (req, res) => {
 //--1 get billing data from the data base and send response to the client site
 app.get("/billing-list", async (req, res) => {
   try {
+    // const limit = Number(req.query.limit) || 10;
+    // const page = Number(req.query.page) || 1;
+
     const query = {};
+    // const cursor = billsCollection
+    //   .find(query)
+    //   .limit()
+    //   .skip(limit * page);
     const cursor = billsCollection.find(query);
     const bills = await cursor.toArray();
     res.send({
@@ -85,6 +96,27 @@ app.get("/billing-list", async (req, res) => {
       error: error.message,
     });
   }
+});
+//--1 update bills
+app.put("/update-billing/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const filter = { _id: ObjectId(id) };
+    const updatedBill = req.body;
+    const options = { upsert: true };
+    const updatedDoc = {
+      $set: updatedBill,
+    };
+    const result = await billsCollection.updateOne(filter, updatedDoc, options);
+    // res.send(result);
+    if (result) {
+      return res.send({
+        success: true,
+        message: "Bill updated successfully!",
+        data: result,
+      });
+    }
+  } catch (error) {}
 });
 //---1 Delete bills
 app.delete("/delete-billing/:id", async (req, res) => {
